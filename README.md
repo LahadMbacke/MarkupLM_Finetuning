@@ -1,41 +1,40 @@
 # MarkupLM — SWDE Finetuning
 
-Reproduction et extension du benchmark SWDE du papier :
+Reproduction of the SWDE benchmark and fine-tuning for attribute extraction:
 
 > Junlong Li, Yiheng Xu, Lei Cui, Furu Wei.  
 > **MarkupLM: Pre-Training of Text and Markup Language for Visually-Rich Document Understanding.**  
 > ACL 2022.
 
-Ce dépôt fait partie d'une thèse sur l'extraction d'information à partir de pages web d'événements culturels français (données Ideactiv), réalisée à l'Université de Nantes.
+This repository is part of a PhD thesis on information extraction from French cultural event web pages (Ideactiv dataset), conducted at the University of Nantes.
 
 ---
 
-## Contenu
+## Contents
 
-| Fichier | Description |
-|--------|-------------|
-| `markuplm_finetune_swde.py` | Script de fine-tuning sur SWDE (validation croisée 10 folds) |
-| `markuplm_infer_events.py` | Script d'inférence sur les pages Ideactiv |
-| `run_markuplm_swde.slurm` | Job SLURM pour Jean Zay (GPU V100) |
-| `requirements.txt` | Dépendances Python |
-| `swde_experiment.log` | Log des expériences |
+| File | Description |
+|------|-------------|
+| `markuplm_finetune_swde.py` | Fine-tuning script on SWDE (10-fold cross-validation) |
+| `markuplm_infer_events.py` | Inference script on Ideactiv pages |
+| `run_markuplm_swde.slurm` | SLURM job script for Jean Zay (GPU V100) |
+| `requirements.txt` | Python dependencies |
 
 ---
 
-## Protocole expérimental
+## Experimental Protocol
 
-Reproduction exacte du protocole de Li et al. (2022) :
+Exact reproduction of the protocol from Li et al. (2022):
 
-- Validation croisée **10 folds** (*leave-n-sites-out*)
-- **k** sites d'entraînement par fold (k = 1, 2, 3, 5)
-- 2 000 pages max par site
-- 4 nœuds de contexte précédents
-- Métrique : précision / rappel / **F1 page-level**
+- **10-fold** leave-n-sites-out cross-validation
+- **k** training sites per fold (k = 1, 2, 3, 5)
+- Up to 2,000 pages per site
+- 4 previous context nodes
+- Metric: page-level precision / recall / **F1**
 
-### Hyperparamètres (papier, Annexe Table 9)
+### Hyperparameters (paper, Appendix Table 9)
 
-| Paramètre | Valeur |
-|-----------|--------|
+| Parameter | Value |
+|-----------|-------|
 | `per_gpu_train_batch_size` | 32 |
 | `num_train_epochs` | 10 |
 | `learning_rate` | 2e-5 |
@@ -45,9 +44,9 @@ Reproduction exacte du protocole de Li et al. (2022) :
 
 ---
 
-## Résultats SWDE (GPU V100, Jean Zay — IDRIS)
+## Results on SWDE (GPU V100, Jean Zay — IDRIS)
 
-### F1 par vertical et par k
+### F1 per vertical and k
 
 | Vertical | k=1 | k=2 | k=3 | k=5 |
 |----------|-----|-----|-----|-----|
@@ -59,36 +58,36 @@ Reproduction exacte du protocole de Li et al. (2022) :
 | nbaplayer | 89.24 | 92.30 | 95.21 | 95.91 |
 | restaurant | 77.75 | 90.17 | 95.44 | 97.32 |
 | university | 87.56 | 96.62 | 97.48 | 98.93 |
-| **Moyenne** | **82.33** | **90.47** | **93.44** | **95.51*** |
+| **Average** | **82.33** | **90.47** | **93.44** | **95.51*** |
 
-*\* Moyenne sur 6 verticales (auto et book non incluses dans le run k=5)*
+*\* Average over 6 verticals (auto and book not included in the k=5 run)*
 
-Comparaison avec le papier (Li et al., 2022, Table 3) :
+Comparison with the paper (Li et al., 2022, Table 3):
 
-| k | Notre F1 moyen | Papier F1 moyen |
-|---|---------------|-----------------|
+| k | Our F1 | Paper F1 |
+|---|--------|----------|
 | 1 | 82.33 % | 82.11 % |
 | 2 | 90.47 % | 91.29 % |
 
 ---
 
-## Utilisation
+## Usage
 
-### Prérequis
+### Requirements
 
 ```bash
 pip install -r requirements.txt
 ```
 
-Cloner le dépôt officiel MarkupLM :
+Clone the official MarkupLM repository:
 
 ```bash
 git clone https://github.com/microsoft/unilm.git unilm_repo
 ```
 
-Télécharger et décompresser le dataset SWDE dans `SWDE/`.
+Download and extract the SWDE dataset into `SWDE/`.
 
-### Fine-tuning (étape 1 : préparation des données + entraînement)
+### Fine-tuning (step 1: data preparation + training)
 
 ```bash
 python markuplm_finetune_swde.py \
@@ -98,7 +97,7 @@ python markuplm_finetune_swde.py \
     --cuda           0
 ```
 
-### Fine-tuning (étape 2 : entraînement seul, données déjà préparées)
+### Fine-tuning (step 2: training only, data already prepared)
 
 ```bash
 python markuplm_finetune_swde.py \
@@ -109,13 +108,13 @@ python markuplm_finetune_swde.py \
     --verticals      movie restaurant
 ```
 
-### Sur Jean Zay (SLURM)
+### On Jean Zay (SLURM)
 
 ```bash
 sbatch run_markuplm_swde.slurm
 ```
 
-### Inférence sur les données Ideactiv
+### Inference on Ideactiv data
 
 ```bash
 python markuplm_infer_events.py \
@@ -124,16 +123,9 @@ python markuplm_infer_events.py \
 ```
 
 ---
-
-## Contexte de thèse
-
-Ce benchmark SWDE constitue la **baseline supervisée** avant transfert vers les données Ideactiv (événements culturels français). Le test de transfert direct (*zero-shot* SWDE → Ideactiv) confirme l'absence de généralisation : le modèle entraîné sur des restaurants américains ne reconnaît pas les attributs de pages institutionnelles françaises.
-
-L'étape suivante est un fine-tuning direct sur les données Ideactiv annotées.
-
 ---
 
-## Référence
+## Reference
 
 ```bibtex
 @inproceedings{li2022markuplm,
@@ -143,4 +135,3 @@ L'étape suivante est un fine-tuning direct sur les données Ideactiv annotées.
   year      = {2022}
 }
 ```
-
