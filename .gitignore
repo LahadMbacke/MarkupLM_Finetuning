@@ -1,0 +1,10 @@
+# Données et modèles lourds
+SWDE/
+SWDE.zip
+unilm_repo/
+data_by_domain/
+results_markuplm/
+__pycache__/
+*.pyc
+*.pth
+*.bin
